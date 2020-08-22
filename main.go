@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 type Request struct {
@@ -83,6 +85,10 @@ func main() {
 			request.Duration = duration
 			Requests[requestID] = request
 
+			if request.Path == "" {
+				fmt.Println(requestID)
+			}
+
 			if _, ok := Paths[request.Path]; !ok {
 				Paths[request.Path] = Path{Count: 0, CumulativeDuration: 0}
 			}
@@ -94,12 +100,12 @@ func main() {
 		}
 	}
 
-	// for requestID, request := range Requests {
-	// 	fmt.Printf("%s: %s %d\n", requestID, request.Path, request.Duration)
-	// }
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Path", "Request Count", "Average Response Time"})
 
 	for endpoint, path := range Paths {
 		avgDuration := float64(path.CumulativeDuration) / float64(path.Count)
-		fmt.Printf("%s\t\t %fms\n", endpoint, avgDuration)
+		table.Append([]string{endpoint, fmt.Sprintf("%d", path.Count), fmt.Sprintf("%f ms", avgDuration)})
 	}
+	table.Render()
 }
