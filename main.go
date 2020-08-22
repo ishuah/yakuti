@@ -3,13 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/olekukonko/tablewriter"
 	"log"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/olekukonko/tablewriter"
 )
 
 type Request struct {
@@ -103,9 +103,20 @@ func main() {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetHeader([]string{"Path", "Request Count", "Average Response Time"})
 
+	data := [][]string{}
+
 	for endpoint, path := range Paths {
 		avgDuration := float64(path.CumulativeDuration) / float64(path.Count)
-		table.Append([]string{endpoint, fmt.Sprintf("%d", path.Count), fmt.Sprintf("%f ms", avgDuration)})
+		data = append(data, []string{endpoint, fmt.Sprintf("%d", path.Count), fmt.Sprintf("%f", avgDuration)})
 	}
+
+	sort.Slice(data, func(i, j int) bool {
+		iAvg, _ := strconv.ParseFloat(data[i][2], 64)
+		jAvg, _ := strconv.ParseFloat(data[j][2], 64)
+		return iAvg > jAvg
+	})
+
+	table.AppendBulk(data)
+
 	table.Render()
 }
